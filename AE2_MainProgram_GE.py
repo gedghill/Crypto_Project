@@ -94,3 +94,105 @@ fig = px.scatter(
     title='K-Means Clustering of Cryptocurrencies (2D PCA)'
 )
 fig.show()
+
+
+#Correlation Analysis
+
+data = pd.read_csv('All_Data.csv',sep=',', encoding='utf-8', index_col=0, parse_dates=True)
+
+print(data.head(3).to_markdown())
+
+# Calculate the correlation matrix for the 'Close' prices of all cryptocurrencies
+correlation_matrix = df.corr()
+
+# Create a correlation matrix heatmap plot for all 30 coins
+import plotly.express as px
+
+# Create the heatmap
+fig = px.imshow(
+    correlation_matrix,  # The correlation matrix
+    labels=dict(x="Cryptocurrency", y="Cryptocurrency", color="Correlation"),  # Axis labels
+    x=correlation_matrix.columns,  # X-axis labels (cryptocurrencies)
+    y=correlation_matrix.index,    # Y-axis labels (cryptocurrencies)
+    #text_auto=True,  # Display correlation values on the heatmap
+    color_continuous_scale='RdBu',  # Color scale
+    title="Cryptocurrency Correlation Matrix"  # Title of the plot
+)
+# Update layout for better readability
+fig.update_layout(
+    xaxis_title="Cryptocurrency",
+    yaxis_title="Cryptocurrency",
+    width=800,  # Width of the plot
+    height=800,  # Height of the plot
+)
+
+# Show the plot
+fig.show()
+
+#Create a heatmap for all 30 coins against 4 selected coins
+selected_coins = ['BTC-USD', 'ETH-USD', 'BNB-USD', 'WIF-USD']
+selected_correlation_matrix = correlation_matrix[selected_coins]
+
+fig = px.imshow(
+    selected_correlation_matrix,
+    labels=dict(color="Correlation"),
+    color_continuous_scale='RdBu',
+    text_auto=True,
+    aspect="auto",
+    height = 800,
+    title="Selected Cryptocurrency Correlation Matrix"
+)
+fig.show()
+import plotly.graph_objects as go
+#Create function to get top positive correlations for each chosen coin
+#def get_top_positive_correlations(coin):
+  # Extract the correlation values for BTC-USD
+  # 
+coin = 'BTC-USD'
+btc_correlations = correlation_matrix[coin]
+
+  # Sort the correlations in descending order and exclude BTC-USD itself
+sorted_correlations = btc_correlations.drop(coin).sort_values(ascending=False)
+
+  # Select the top 4 positively correlated coins
+  top_4_correlated = sorted_correlations.head(4)
+  # Convert the top_4_correlated Series to a DataFrame for better formatting
+  top_4_table = pd.DataFrame(top_4_correlated)
+
+  # Add a column for the cryptocurrency names
+  top_4_table['Cryptocurrency'] = top_4_table.index
+
+  # Reset the index to make the table cleaner
+  top_4_table = top_4_table.reset_index(drop=True)
+  top_4_table.rename(columns={coin: f'Correlation with {coin}'}, inplace=True)
+
+  #plot the information into a presentable table
+  formatted_correlations = top_4_table[f'Correlation with {coin}'].apply(lambda x: f'{x:.6f}')
+
+  # Create the table
+  fig = go.Figure(data=[go.Table(
+      header=dict(
+          values=['Cryptocurrency', f'Correlation with {coin}'],  # Column headers
+          fill_color='paleturquoise',  # Header background color
+          align='center',  # Align text to the left
+          font=dict(size=14, color='black'), # Header font style
+      ),
+      cells=dict(
+          values=[top_4_table['Cryptocurrency'], formatted_correlations],  # Cell values
+          fill_color='lavender',  # Cell background color
+          align='center',  # Align text to the left
+          font=dict(size=12, color='black')  # Cell font style
+      ))
+  ])
+# Update layout for better readability
+  fig.update_layout(
+      title=f'Top 4 Cryptocurrencies Positively Correlated with {coin}',
+      title_x=0.5,  # Center the title
+      margin=dict(l=80, r=80, t=80, b=20),  # Adjust margins
+      width=700,
+      height=300
+  )
+
+  # Show the table
+  return fig.show()
+get_top_positive_correlations('BTC-USD')
